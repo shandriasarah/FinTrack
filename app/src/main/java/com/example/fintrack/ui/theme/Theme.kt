@@ -1,58 +1,113 @@
 package com.example.fintrack.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+private val EsquemaClaro = lightColorScheme(
+    primary = Verde40,
+    onPrimary = Color.White,
+    primaryContainer = Verde90,
+    onPrimaryContainer = Verde10,
+    secondary = Verde20,
+    onSecondary = Color.White,
+    secondaryContainer = Verde95,
+    onSecondaryContainer = Verde20,
+    tertiary = Laranja40,
+    background = Cinza98,
+    onBackground = Cinza10,
+    surface = Color.White,
+    onSurface = Cinza10,
+    surfaceVariant = Cinza95,
+    onSurfaceVariant = Cinza50,
+    surfaceContainer = Color.White,
+    surfaceContainerHigh = Cinza95,
+    outline = Cinza80,
+    outlineVariant = Cinza90,
+    error = Vermelho40,
+    onError = Color.White
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+private val EsquemaEscuro = darkColorScheme(
+    primary = Verde80,
+    onPrimary = Verde10,
+    primaryContainer = Verde20,
+    onPrimaryContainer = Verde90,
+    secondary = Verde80,
+    onSecondary = Verde10,
+    secondaryContainer = Cinza30,
+    onSecondaryContainer = Verde90,
+    tertiary = Color(0xFFFFB77C),
+    background = Cinza10,
+    onBackground = Cinza95,
+    surface = Cinza20,
+    onSurface = Cinza95,
+    surfaceVariant = Cinza30,
+    onSurfaceVariant = Cinza80,
+    surfaceContainer = Cinza20,
+    surfaceContainerHigh = Cinza30,
+    outline = Cinza50,
+    outlineVariant = Cinza30,
+    error = Vermelho80,
+    onError = Color(0xFF690005)
+)
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+/** Cores de entrada/saída, que mudam entre tema claro e escuro. */
+@Immutable
+data class CoresFinanceiras(
+    val entrada: Color,
+    val saida: Color,
+    val alerta: Color
+)
+
+private val CoresClaras = CoresFinanceiras(
+    entrada = Color(0xFF00875F),
+    saida = Vermelho40,
+    alerta = Laranja40
+)
+
+private val CoresEscuras = CoresFinanceiras(
+    entrada = Verde80,
+    saida = Vermelho80,
+    alerta = Color(0xFFFFB77C)
+)
+
+val LocalCoresFinanceiras = staticCompositionLocalOf { CoresClaras }
+
+private val Formas = Shapes(
+    small = RoundedCornerShape(10.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(24.dp)
 )
 
 @Composable
 fun FinTrackTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    CompositionLocalProvider(
+        LocalCoresFinanceiras provides if (darkTheme) CoresEscuras else CoresClaras
+    ) {
+        MaterialTheme(
+            colorScheme = if (darkTheme) EsquemaEscuro else EsquemaClaro,
+            typography = Typography,
+            shapes = Formas,
+            content = content
+        )
     }
+}
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+/** Atalho: `FinTrackCores.atual.entrada` */
+object FinTrackCores {
+    val atual: CoresFinanceiras
+        @Composable get() = LocalCoresFinanceiras.current
 }

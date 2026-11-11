@@ -2,105 +2,140 @@ package com.example.fintrack
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
+import com.example.fintrack.ui.theme.FinTrackTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        val viewModel = ViewModelProvider(this)[FinancasViewModel::class.java]
+
         setContent {
-            MaterialTheme {
-                MainScreen()
+            FinTrackTheme {
+                TelaPrincipal(viewModel)
             }
         }
     }
 }
-when (telaAtual) {
-    Tela.INICIO -> InicioView(viewModel = viewModel)
-    Tela.HISTORICO -> FinancasView(viewModel = viewModel)
-    Tela.NOVA_TRANSACAO -> NovaTransacaoView(
-    viewModel = viewModel,
-    onSalvar = { telaAtual = Tela.HISTORICO }
-    )
-    Tela.METAS -> MetasView()
-    Tela.PERFIL -> PerfilView()
+
+@Composable
+fun TelaPrincipal(viewModel: FinancasViewModel) {
+    var telaAtual by rememberSaveable { mutableStateOf(Tela.INICIO) }
+    var telaAnterior by rememberSaveable { mutableStateOf(Tela.INICIO) }
+
+    fun irPara(tela: Tela) {
+        if (tela == Tela.NOVA_TRANSACAO) telaAnterior = telaAtual
+        telaAtual = tela
+    }
+
+    // Botão "voltar" do celular: fecha o formulário ou volta para o início
+    BackHandler(enabled = telaAtual != Tela.INICIO) {
+        telaAtual = if (telaAtual == Tela.NOVA_TRANSACAO) telaAnterior else Tela.INICIO
+    }
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
+            if (telaAtual != Tela.NOVA_TRANSACAO) {
+                BarraNavegacao(telaAtual, onSelecionar = ::irPara)
+            }
+        }
+    ) { padding ->
+        AnimatedContent(
+            targetState = telaAtual,
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            label = "troca_de_tela"
+        ) { tela ->
+            when (tela) {
+                Tela.INICIO -> InicioView(
+                    viewModel = viewModel,
+                    onVerExtrato = { irPara(Tela.EXTRATO) },
+                    onVerPlanejamento = { irPara(Tela.PLANEJAR) }
+                )
+                Tela.EXTRATO -> ExtratoView(viewModel)
+                Tela.NOVA_TRANSACAO -> NovaTransacaoView(
+                    viewModel = viewModel,
+                    onFechar = { telaAtual = telaAnterior }
+                )
+                Tela.PLANEJAR -> PlanejarView(viewModel)
+                Tela.PERFIL -> PerfilView(viewModel)
+            }
+        }
+    }
 }
 
 @Composable
-fun MainScreen() {
-    var telaAtual by remember { mutableStateOf(Tela.INICIO) }
-    val viewModel: FinancasViewModel = remember { FinancasViewModel() }
-
-    Scaffold(
-        bottomBar = {
-            BottomAppBar(
-                containerColor = Color.White,
-                tonalElevation = 8.dp
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
+private fun BarraNavegacao(telaAtual: Tela, onSelecionar: (Tela) -> Unit) {
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp
+    ) {
+        Tela.entries.forEach { tela ->
+            if (tela == Tela.NOVA_TRANSACAO) {
+                // Botão central de adicionar
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Botão Início
-                    TextButton(onClick = { telaAtual = Tela.INICIO }) {
-                        Text(
-                            text = "Início",
-                            color = if (telaAtual == Tela.INICIO) Color(0xFF006C4C) else Color.Gray
-                        )
-                    }
-
-                    // Botão Histórico
-                    TextButton(onClick = { telaAtual = Tela.HISTORICO }) {
-                        Text(
-                            text = "Histórico",
-                            color = if (telaAtual == Tela.HISTORICO) Color(0xFF006C4C) else Color.Gray
-                        )
-                    }
-
-                    // Botão Central (+)
                     FloatingActionButton(
-                        onClick = { telaAtual = Tela.NOVA_TRANSACAO },
+                        onClick = { onSelecionar(tela) },
                         shape = CircleShape,
-                        containerColor = Color(0xFF0A382C),
-                        contentColor = Color.White,
-                        modifier = Modifier.size(48.dp)
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+                        modifier = Modifier.size(52.dp)
                     ) {
-                        Text("+", style = MaterialTheme.typography.titleLarge)
-                    }
-
-                    // Botão Metas
-                    TextButton(onClick = { telaAtual = Tela.METAS }) {
-                        Text(
-                            text = "Metas",
-                            color = if (telaAtual == Tela.METAS) Color(0xFF006C4C) else Color.Gray
-                        )
-                    }
-
-                    // Botão Perfil
-                    TextButton(onClick = { telaAtual = Tela.PERFIL }) {
-                        Text(
-                            text = "Perfil",
-                            color = if (telaAtual == Tela.PERFIL) Color(0xFF006C4C) else Color.Gray
-                        )
+                        Icone(tela.icone, "Novo lançamento", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
+            } else {
+                NavigationBarItem(
+                    selected = telaAtual == tela,
+                    onClick = { onSelecionar(tela) },
+                    icon = { Icon(painterResource(tela.icone), contentDescription = null) },
+                    label = { Text(tela.rotulo) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                )
             }
-        }
-    ) { paddingValues ->
-        when (telaAtual) {
-            Tela.INICIO -> InicioView(viewModel = viewModel)
-            Tela.HISTORICO -> FinancasView(viewModel = viewModel)
-            Tela.NOVA_TRANSACAO -> FinancasView(viewModel = viewModel)
-            Tela.METAS -> MetasView()
-            Tela.PERFIL -> PerfilView() // Chamando a nova tela construída!
         }
     }
 }
