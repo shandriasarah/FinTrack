@@ -4,6 +4,11 @@ Aplicativo Android de finanças pessoais para registrar entradas e gastos, acomp
 
 Feito em **Kotlin** com **Jetpack Compose**. Os dados ficam salvos no próprio celular, sem login e sem internet.
 
+![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=flat&logo=kotlin&logoColor=white)
+![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=flat&logo=jetpackcompose&logoColor=white)
+![Material 3](https://img.shields.io/badge/Material_3-757575?style=flat&logo=materialdesign&logoColor=white)
+![Android](https://img.shields.io/badge/Android_7.0+-3DDC84?style=flat&logo=android&logoColor=white)
+
 ## Funcionalidades
 
 ### Início
@@ -54,6 +59,27 @@ Feito em **Kotlin** com **Jetpack Compose**. Os dados ficam salvos no próprio c
 - Android Gradle Plugin 9.3
 - `minSdk` 24 (Android 7.0) e `targetSdk` 37
 
+## Arquitetura
+
+O app segue o padrão **MVVM** com uma única fonte de estado:
+
+```
+Telas (Compose)            InicioView, ExtratoView, NovaTransacaoView, PlanejarView, PerfilView
+      │  observam o estado e chamam ações
+      ▼
+FinancasViewModel          regras de negócio: totais do mês, regra 50/30/20,
+      │                    contas pendentes, progresso das metas, dicas automáticas
+      ▼
+Armazenamento              serializa transações, contas e metas em JSON
+      │
+      ▼
+SharedPreferences          dados salvos no próprio aparelho
+```
+
+- As telas não têm lógica de cálculo: só exibem o estado e repassam eventos ao ViewModel.
+- O `AndroidViewModel` sobrevive à rotação de tela e centraliza toda a regra de negócio.
+- Os modelos (`Transacao`, `ContaFixa`, `Meta`, categorias) ficam separados em `Transacao.kt`.
+
 ## Estrutura do código
 
 Os arquivos ficam em `app/src/main/java/com/example/fintrack/`:
@@ -88,3 +114,9 @@ Para gerar o APK pela linha de comando:
 ```
 
 O arquivo fica em `app/build/outputs/apk/debug/`.
+
+## Autora
+
+Desenvolvido por **Sarah Shandria**, estudante de Ciência da Computação.
+
+[LinkedIn](https://www.linkedin.com/in/sarah-shandria-727b86376/) · [GitHub](https://github.com/shandriasarah)
