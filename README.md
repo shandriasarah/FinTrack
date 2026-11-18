@@ -9,6 +9,16 @@ Feito em **Kotlin** com **Jetpack Compose**. Os dados ficam salvos no próprio c
 ![Material 3](https://img.shields.io/badge/Material_3-757575?style=flat&logo=materialdesign&logoColor=white)
 ![Android](https://img.shields.io/badge/Android_7.0+-3DDC84?style=flat&logo=android&logoColor=white)
 
+## Telas
+
+| Início | Divisão da renda | Extrato |
+| --- | --- | --- |
+| <img src="docs/fintrack-inicio.webp" width="220"> | <img src="docs/fintrack-inicio-graficos.webp" width="220"> | <img src="docs/fintrack-extrato.webp" width="220"> |
+
+| Novo lançamento | Planejar | Perfil |
+| --- | --- | --- |
+| <img src="docs/fintrack-novo-lancamento.webp" width="220"> | <img src="docs/fintrack-planejar.webp" width="220"> | <img src="docs/fintrack-perfil.webp" width="220"> |
+
 ## Funcionalidades
 
 ### Início
